@@ -202,17 +202,33 @@ def Prepare_Model_Input_Data(hydroblocks_info):
 
  #Write the connection matrices
  #width
- wmatrix = output['cmatrix']['width']
- nconnections = wmatrix.data.size
- grp = fp.createGroup('wmatrix')
- grp.createDimension('connections_columns',wmatrix.indices.size)
- grp.createDimension('connections_rows',wmatrix.indptr.size)
- grp.createVariable('data','f4',('connections_columns',))
- grp.createVariable('indices','f4',('connections_columns',))
- grp.createVariable('indptr','f4',('connections_rows',))
- grp.variables['data'][:] = wmatrix.data
- grp.variables['indices'][:] = wmatrix.indices
- grp.variables['indptr'][:] = wmatrix.indptr
+ #wmatrix = output['cmatrix']['width']
+ #nconnections = wmatrix.data.size
+ #grp = fp.createGroup('wmatrix')
+ #grp.createDimension('connections_columns',wmatrix.indices.size)
+ #grp.createDimension('connections_rows',wmatrix.indptr.size)
+ #grp.createVariable('data','f4',('connections_columns',))
+ #grp.createVariable('indices','f4',('connections_columns',))
+ #grp.createVariable('indptr','f4',('connections_rows',))
+ #grp.variables['data'][:] = wmatrix.data
+ #grp.variables['indices'][:] = wmatrix.indices
+ #grp.variables['indptr'][:] = wmatrix.indptr
+
+ #Write the connection matrices per characteristic subbasin laura
+ #width
+ for i in range(1,(int(hydroblocks_info['hmc_parameters']["number_of_characteristic_subbasins"])+1)):
+  text='wmatrix_Basin%s' %int(i)
+  wmatrix=output['cmatrix_Basin%s' %int(i)]['width']
+  nconnections = wmatrix.data.size
+  grp = fp.createGroup(text)
+  grp.createDimension('connections_columns',wmatrix.indices.size)
+  grp.createDimension('connections_rows',wmatrix.indptr.size)
+  grp.createVariable('data','f4',('connections_columns',))
+  grp.createVariable('indices','f4',('connections_columns',))
+  grp.createVariable('indptr','f4',('connections_rows',))
+  grp.variables['data'][:] = wmatrix.data
+  grp.variables['indices'][:] = wmatrix.indices
+  grp.variables['indptr'][:] = wmatrix.indptr
 
  #Write the model parameters
  grp = fp.createGroup('parameters')
@@ -294,10 +310,12 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
 
  #Calculate channel initiation points (2 parameters)
  C = area/eares*slope**2
+ c_limit=int(hydroblocks_info['channel_initiation']['C'])
+ a_limit=int(hydroblocks_info['channel_initiation']['area'])
  #ipoints = ((C > 200) & (area > 10**5)).astype(np.int32)
  #ipoints = ((C > 100) & (area > 10**5)).astype(np.int32)
  #ipoints = ((C > 100) & (area > 10**4)).astype(np.int32)
- ipoints = ((C > 50) & (area > 10**4)).astype(np.int32)
+ ipoints = ((C > c_limit) & (area > a_limit)).astype(np.int32)
  #ipoints = ((C > 25) & (area > 10**4)).astype(np.int32)
  #ipoints = (C > 100).astype(np.int32)
  ipoints[ipoints == 0] = -9999
@@ -312,9 +330,9 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
  #Compute the channels
  print("Defining channels",flush=True)
  #(channels,channels_wob,channel_topology,tmp1) = terrain_tools.ttf.calculate_channels_wocean_wprop(ac,10**4,10**4,fdir,mask)
- (channels,channels_wob,channel_topology,tmp1,crds) = terrain_tools.ttf.calculate_channels_wocean_wprop_wcrds(ac,10**4,10**4,fdc,mask,np.flipud(covariates['lats']),covariates['lons'])
+ (channels,channels_wob,channel_topology,tmp1,crds) = terrain_tools.ttf.calculate_channels_wocean_wprop_wcrds(ac,a_limit,a_limit,fdc,mask,np.flipud(covariates['lats']),covariates['lons'])
  #(tmp1,tmp2,tmp3,shreve_order) = terrain_tools.ttf.calculate_channels_wocean_wprop(ac_all,10**4,10**4,fdc,mask_all)
- (tmp1,tmp2,tmp3,shreve_order) = terrain_tools.ttf.calculate_channels_wocean_wprop(ac_all,10**4,10**4,fdc,mask_all)
+ (tmp1,tmp2,tmp3,shreve_order) = terrain_tools.ttf.calculate_channels_wocean_wprop(ac_all,a_limit,a_limit,fdc,mask_all)
  #Curate channel_topology
  channel_topology = channel_topology[channel_topology != -9999]
  
@@ -641,8 +659,16 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
  HMC_info['basins'] = basins
  HMC_info['tile_position'] = tile_position
  HMC_info['channel_map'] = channels_wob
+ #print('HMC_info_basins: ',basins.shape,flush=True)
+ #print('HMC_info_TilePosition: ',tile_position.shape,flush=True)
+ #print('HMC_info_ChannelMap: ',channels_wob.shape,flush=True)
+
+ #print('HMC_info_basins: ',np.unique(basins),flush=True)
+ #print('HMC_info_TilePosition: ',np.unique(tile_position),flush=True)
+ #print('HMC_info_ChannelMap: ',np.unique(channels_wob),flush=True)
 
  #return (hrus.astype(np.float32),nhru,new_hand,HMC_info,covariates,db_channels,hand,
+ #print('TILES:',np.unique(tiles),flush=True)
  return (hrus.astype(np.float32),nhru,new_hand,HMC_info,covariates,db_channels,new_hand2,
          basins,basin_clusters,hand,tiles,area_adj,tile_position)
 
@@ -750,7 +776,6 @@ def Assign_Parameters_Semidistributed(covariates,metadata,hydroblocks_info,OUTPU
    OUTPUT['hru']['centroid_lons'][hru] = np.nanmean(covariates['lons'][idx])
    OUTPUT['hru']['centroid_lats'][hru] = np.nanmean(covariates['lats'][idx])
    #print OUTPUT['hru']['centroid_lons']  
-
  #if hydroblocks_info['water_management']['hwu_flag'] == True: 
  # for hru in np.arange(nhru):
  #  #HRU distance between the centroids of the hru and all the other hrus 
@@ -764,27 +789,26 @@ def Determine_HMC_Connectivity(h1,h2,b1,b2,tp1,tp2,ivc,irc,ibc):
 
  if (h2 == -9999):return False
  if (h1 == h2):return True
- if ((tp1 == tp2) & (tp1 == 0) & (b1 != b2) & (ivc)):return True
- if (b1 != b2) & (irc == False):return False
- if (np.abs(tp1 - tp2) != 1) & (ibc == False):return False
+ if ((tp1 == tp2) & (tp1 == 0) & (b1 != b2) & (ivc)):return True #intervalley_connectivity
+ if (b1 != b2) & (irc == False):return False #interridge_connectivity
+ if (np.abs(tp1 - tp2) != 1) & (ibc == False):return False #intraband_connectivity
 
  return True
 
-def Calculate_HRU_Connections_Matrix_HMC(covariates,cluster_ids,nhru,dx,HMC_info,hydroblocks_info):
-
- #Add pointers for simplicity
+def Calculate_HRU_Connections_Matrix_HMC(hbands,dx,HMC_info,hydroblocks_info):
+ #Add pointers for simplicity, laura: removed covariates 
  tile_position = HMC_info['tile_position']
  basins = HMC_info['basins']
  ivc = hydroblocks_info['hmc_parameters']['intervalley_connectivity']
  irc = hydroblocks_info['hmc_parameters']['interridge_connectivity']
  ibc = hydroblocks_info['hmc_parameters']['intraband_connectivity']
- 
+
  #Perform the work
- (hdst,horg) = Calculate_HRU_Connections_Matrix_HMC_workhorse(cluster_ids,nhru,dx,tile_position,
-               basins,ivc,irc,ibc)
+ (hdst,horg) = Calculate_HRU_Connections_Matrix_HMC_workhorse(hbands,dx,tile_position,
+               basins,ivc,irc,ibc) #laura nhru replaced 
 
  #Prepare the sparse matrix
- cmatrix = sparse.coo_matrix((np.ones(hdst.size),(horg,hdst)),shape=(nhru,nhru),dtype=np.float32)
+ cmatrix = sparse.coo_matrix((np.ones(hdst.size),(horg,hdst)),shape=(int(np.unique(hbands).shape[0]-1),int(np.unique(hbands).shape[0]-1)),dtype=np.float32) #laura nhru replaced
  cmatrix = cmatrix.tocsr()
 
  #Prepare length, width, and ksat matrices
@@ -793,18 +817,18 @@ def Calculate_HRU_Connections_Matrix_HMC(covariates,cluster_ids,nhru,dx,HMC_info
 
  #Prepare output dictionary
  cdata = {'width':wmatrix.T,}
-
  return cdata
 
 @numba.jit(nopython=True,cache=True)
-def Calculate_HRU_Connections_Matrix_HMC_workhorse(cluster_ids,nhru,dx,tile_position,basins,
-    ivc,irc,ibc):
+def Calculate_HRU_Connections_Matrix_HMC_workhorse(cluster_ids,dx,tile_position,basins,
+    ivc,irc,ibc): #laura nhru parameter removed
 
  #Define spatial resolution
  res = dx
- 
+
  horg = []
  hdst = []
+
  #Count the connections
  for i in range(cluster_ids.shape[0]):
   for j in range(cluster_ids.shape[1]):
@@ -846,7 +870,6 @@ def Calculate_HRU_Connections_Matrix_HMC_workhorse(cluster_ids,nhru,dx,tile_posi
      hdst.append(cluster_ids[i,j+1])
  horg = np.array(horg)
  hdst = np.array(hdst)
-
  return (hdst,horg)
 
 def Create_and_Curate_Covariates(wbd,hydroblocks_info):
@@ -983,7 +1006,8 @@ def Create_Clusters_And_Connections(workspace,wbd,output,input_dir,nhru,info,hyd
  #Determine the HRUs (clustering if semidistributed; grid cell if fully distributed)
  print("Computing the HRUs",flush=True)
  (cluster_ids,nhru,new_hand,HMC_info,covariates,dbc,hand,basins,basin_clusters,hand_org,hbands,area_adj,tile_position) = Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,resx,input_dir)
-
+ #print('HMC_info',HMC_info,flush=True)
+ #print("HBANDS:",hbands.shape,flush=True)
  #covariates['hand'] = new_hand
  covariates['hand'] = hand
  hydroblocks_info['nhru'] = nhru
@@ -1006,14 +1030,34 @@ def Create_Clusters_And_Connections(workspace,wbd,output,input_dir,nhru,info,hyd
  hydroblocks_info['input_fp'].createGroup('water_use')
 
  #Prepare the hru connections matrix (darcy clusters)
- print("Calculating the connections between HRUs",flush=True)
- cmatrix = Calculate_HRU_Connections_Matrix_HMC(covariates,cluster_ids,nhru,resx,HMC_info,hydroblocks_info)
+ #cmatrix = Calculate_HRU_Connections_Matrix_HMC(covariates,cluster_ids,resx,HMC_info,hydroblocks_info)
+
+ #cmatrix = Calculate_HRU_Connections_Matrix_HMC(hbands,resx,HMC_info,hydroblocks_info) #laura: connection matrix per height band, removed covariates from the function
 
  #Define the metadata
  metadata = gdal_tools.retrieve_metadata(wbd['files']['dem'])
 
  #Make the output dictionary for the basin
- OUTPUT = {'hru':{},'metadata':metadata,'mask':mask,'cmatrix':cmatrix}
+ OUTPUT = {'hru':{},'metadata':metadata,'mask':mask}
+
+ #Create a connection matrix per characteristic subbasin, laura
+ bcu=np.unique(basin_clusters)
+ bcu=bcu[bcu>0]
+
+ for bc in bcu:
+  masked_hband=np.empty(hbands.shape)
+  if bc==1:
+   masked_hband[basin_clusters==int(bc)]=hbands[basin_clusters==bc]
+  else:
+   masked_hband[basin_clusters==int(bc)]=hbands[basin_clusters==bc]
+   masked_hband=masked_hband-(np.min(hbands[basin_clusters==bc]))
+  
+  masked_hband[~(basin_clusters==int(bc))]=int(-9999)
+  group_name='cmatrix_Basin%s' %bc
+  shape=int(((np.unique(masked_hband)).shape[0])-1)
+  cmatrix=np.empty([shape,shape])
+  cmatrix=Calculate_HRU_Connections_Matrix_HMC(masked_hband,resx,HMC_info,hydroblocks_info) #laura: removed covariates from the function
+  OUTPUT[group_name]=cmatrix #FIN laura
 
  #Remember the map of hrus
  OUTPUT['hru_map'] = cluster_ids
@@ -1113,6 +1157,7 @@ def Prepare_Meteorology_Semidistributed(workspace,wbd,OUTPUT,input_dir,info,hydr
 
  #Finalize data
  for var in db_data:
+  print("  ",var)
   for hru in mapping_info[var]:
    pcts = mapping_info[var][hru]['pcts']
    if flag_downscale == False:
@@ -1128,6 +1173,11 @@ def Prepare_Meteorology_Semidistributed(workspace,wbd,OUTPUT,input_dir,info,hydr
   #Write the meteorology to the netcdf file (single chunk for now...)
   grp = hydroblocks_info['input_fp'].groups['meteorology']
   grp.createVariable(var,'f4',('time','hru'))#,zlib=True)
+  #t=meteorology[var].shape[1] #laura.Write as weekly chunks to save memory.SLOW
+  #nweeks=t//(168)
+  #for week in range(0,nweeks):
+   #grp.variables[var][:,int(week*168):int((week*168)+168)]=meteorology[var][:,int(week*168):int((week*168)+168)]
+  #grp.variables[var][:,int(nweeks*168):]=meteorology[var][:,int(nweeks*168):]
   grp.variables[var][:] = meteorology[var][:]
 
  #Add time information

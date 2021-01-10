@@ -28,8 +28,8 @@ def Run_HydroBlocks(metadata,edir,cid,rdir):
  info['cdir'] = '%s/%s' % (edir,cid)
  info['Qobs_file'] = '%s/data/obs/obs.pck' % rdir
  info['routing_file'] = '%s/%s/octopy.pck' % (edir,cid)
- info['input_file'] = '%s/%s/input_file_routing.nc' % (edir,cid)
- info['output'] = {"dir":"%s/output_data/%s" % (edir,cid),
+ info['input_file'] = '%s/%s/input_file_routing.nc' % (edir,cid) #Change for assimilated meteorology file
+ info['output'] = {"dir":"%s/output_data/%s" % (edir,cid), #Change for assimilated meteorology output directory
      "vars":info['output']['vars'],
      "routing_vars":info['output']['routing_vars']}
  info['restart'] = {"flag":info['restart']['flag'],
@@ -85,7 +85,7 @@ def run(comm,metadata_file):
  for cid in cids[rank::size]:
   print('cid:',cid,flush=True)
   #Create output directory
-  os.system('mkdir -p %s/output_data/%d' % (edir,cid))
+  os.system('mkdir -p %s/output_data/%d' % (edir,cid)) #Change for assimilated meteorology output directory
   #os.chdir('%s' % (edir,))
   #mdfile = '%s/%s/metadata.json' % (edir,cid)
   Run_HydroBlocks(metadata,edir,cid,rdir)

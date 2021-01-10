@@ -149,9 +149,9 @@ class kinematic:
   (self.hband_inundation[:],self.reach2hband_inundation[:]) = calculate_inundation_height_per_hband(A,A1,W,M,hand,hband,self.reach2hband_inundation,self.reach2hband)
   tmp = np.sum(self.reach2hband*self.reach2hband_inundation,axis=1)/self.c_length
   tmp1 = np.max(np.abs(A1-tmp))
-  if tmp1 > 10**-3:
-   argmax = np.argmax(np.abs(A1-tmp))
-   print(self.itime,np.abs(A1-tmp)[argmax],A1[argmax],tmp[argmax],flush=True)
+  #if tmp1 > 10**-3:
+   #argmax = np.argmax(np.abs(A1-tmp))
+   #print(self.itime,np.abs(A1-tmp)[argmax],A1[argmax],tmp[argmax],flush=True)
 
   #Calculate Qc and Qf
   self.Ac[:] = self.reach2hband[range(self.nchannel),self.hband_channel]*self.reach2hband_inundation[range(self.nchannel),self.hband_channel]/self.c_length
@@ -244,6 +244,7 @@ class kinematic:
   #Curate A1 (issues with conservation of mass)
   #if np.sum(A1<0) > 0:print(np.sum(A1<0))
   A1[A1 < 0] = 0.0
+  A1[np.isnan(A1)==True]=0.0 #Laura
   #Calculate difference with previous iteration
   dif1 = np.max(np.abs(A0 - A1))
   #Reset A0
@@ -340,8 +341,9 @@ def calculate_compound_convenyance(Ac,Af,Pc,Pf,W,M,A1,cn,fpn):
    Kvnf = (1.0/fpn[i])*(Af1**(5.0/3.0)/Pf1**(2.0/3.0))
    #Calculate compound conveyance
    Kvn[i] = Kvnc + Kvnf
-   if np.isnan(Kvn[i]) == 1:
-    print('inside',A1[i],Kvn[i],a,b,c,h,Ac1,Af1,Pc1,Pf1,Kvnc,Kvnf)
+   #if np.isnan(Kvn[i]) == 1:
+    #print('inside',Ac[i,1],Af[i,1],Pc[i,1],Pf[i,j],W[i,0],M[i,j],A1[i],cn[i],fpn[i]) #Laura
+    #print('inside',A1[i],Kvn[i],a,b,c,h,Ac1,Af1,Pc1,Pf1,Kvnc,Kvnf)
 
  return Kvn
 
