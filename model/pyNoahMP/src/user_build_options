@@ -1,67 +1,24 @@
-#
-#  Options for Linux with Intel Fortran
-#
-# COMPILERF90	=	ifort
-# FREESOURCE	=	-free
-# F90FLAGS	=       -convert big_endian -g -O0 -check all,noshape,nopointer,noarg_temp_created -mp -fpe0
-# MODFLAG		=	-I
-# LDFLAGS		=	
-# CPP		=	cpp
-# CPPFLAGS	=	-C -P -traditional # -D_HRLDAS_URBAN_
-# LIBS		=	
-# LIBJASPER       =       -ljpeg -L/scholar/kmanning/jasper/lib -ljasper
-# INCJASPER       =       -I/scholar/kmanning/jasper/include
-# NETCDFMOD	=	-I/scholar/kmanning/netcdf-3.6.3-ifort/include
-# NETCDFLIB	=	-L/scholar/kmanning/netcdf-3.6.3-ifort/lib -lnetcdf
-# BZIP2           =       YES
-# BZIP2_INCLUDE   =       -I/usr/include
-# BZIP2_LIB       =       -L/usr/lib -lbz2
-# RM		= 	rm -f
-# CC		=	cc
 
-#
-#  Options for Linux with gfortran
-#
+#=============================================================================================
+#  Options for Linux with gfortran (not fully tested)
+#=============================================================================================
 
- COMPILERF90 =	gfortran -L/usr/lib64 -L/lib64
- FREESOURCE	=	-ffree-form  -ffree-line-length-none -fno-range-check -cpp -L/usr/lib64 -L/lib64
- F90FLAGS	=   -g -fconvert=big-endian -O3 -fbounds-check -fimplicit-none -fbacktrace -fPIC #-Wall -fcheck=array-temps,bounds,do,mem,pointer
- MODFLAG	=	-I
- LDFLAGS	=	
- CPP		=	cpp
- CPPFLAGS	=	-P -traditional # -D_HRLDAS_URBAN_
- LIBS		=	-fopenmp
- LIBJASPER     =       -ljpeg -L/usr/lib -ljasper
- INCJASPER     =       -I/usr/include
- LIBJASPER     =       -ljpeg -L/scholar/kmanning/jasper/lib -ljasper
- INCJASPER     =       -I/scholar/kmanning/jasper/include
- NETCDFMOD	=	-I/usr/local/include
- NETCDFLIB	=	-L/usr/local/lib -lnetcdf
- BZIP2		=       YES
- BZIP2_LIB	=       -lbz2
- BZIP2_INCLUDE	=       -I/usr/include
- RM		= 	rm -f
- CC		=	cc 
-#
-#
-#  Options for Linux with pgf90
-#
-
-# COMPILERF90	=	pgf90
-# FREESOURCE	=	-Mfree
-# F90FLAGS	=       -g -byteswapio 
-# MODFLAG	=	-I
-# LDFLAGS	=	
-# CPP		=	cpp
-# CPPFLAGS	=	-C -P -traditional # -D_HRLDAS_URBAN_
-# LIBS		=	
-# LIBJASPER     =       -ljpeg -L/usr/lib -ljasper
-# INCJASPER     =       -I/usr/include
-# NETCDFMOD      =       -I/usr/local/netcdf4-pgi/include
-# NETCDFLIB      =       -L/usr/local/netcdf4-pgi/lib -lnetcdf -lnetcdff
-# BZIP2          =       YES
-# BZIP2_LIB      =       -lbz2
-# BZIP2_INCLUDE  =       -I/usr/include
-# RM             =       rm -f
-# CC             =       cc
+ COMPILERF90    =       /usr/bin/gfortran
+ FREESOURCE     =       -ffree-form  -ffree-line-length-none
+# F90FLAGS       =       -g -fconvert=big-endian -fbounds-check -fno-range-check -fno-underscoring
+ F90FLAGS       =       -g -fconvert=big-endian -fbounds-check -fno-range-check -fPIC
+ MODFLAG        =       -I
+ LDFLAGS        =       
+ CPP            =       /usr/bin/cpp
+ CPPFLAGS       =       -P -traditional -D_GFORTRAN_
+ LIBS           =       
+ LIBJASPER      =       -ljpeg -L/home/nc153/soteria/software/miniconda3/envs/hrldas/lib -ljasper
+ INCJASPER      =       -I/home/nc153/soteria/software/miniconda3/envs/hrldas/include
+ NETCDFMOD      =       -I/stor/soteria/hydro/private/nc153/local/include
+ NETCDFLIB      =       -L/stor/soteria/hydro/private/nc153/local/lib -lnetcdf -lnetcdff
+ BZIP2          =       NO
+ BZIP2_LIB      =       -lbz2 -L/home/nc153/soteria/software/miniconda3/envs/hrldas/lib
+ BZIP2_INCLUDE  =       -I/home/nc153/soteria/software/miniconda3/envs/hrldas/include
+ RM             =       rm -f
+ CC             =       /usr/bin/gcc
 

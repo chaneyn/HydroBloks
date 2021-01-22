@@ -28,8 +28,8 @@ def Run_HydroBlocks(metadata,edir,cid,rdir):
  info['cdir'] = '%s/%s' % (edir,cid)
  info['Qobs_file'] = '%s/data/obs/obs.pck' % rdir
  info['routing_file'] = '%s/%s/octopy.pck' % (edir,cid)
- info['input_file'] = '%s/%s/input_file_routing.nc' % (edir,cid) #Change for assimilated meteorology file
- info['output'] = {"dir":"%s/output_data/%s" % (edir,cid), #Change for assimilated meteorology output directory
+ info['input_file'] = '%s/%s/input_file_routing.nc' % (edir,cid)
+ info['output'] = {"dir":"%s/output_data/%s" % (edir,cid),
      "vars":info['output']['vars'],
      "routing_vars":info['output']['routing_vars']}
  info['restart'] = {"flag":info['restart']['flag'],
@@ -41,10 +41,17 @@ def Run_HydroBlocks(metadata,edir,cid,rdir):
  fdate = datetime.datetime(metadata['enddate']['year'],metadata['enddate']['month'],metadata['enddate']['day'],0) + datetime.timedelta(days=1)
  
  #Run the segments for the model
+ restart_frequency = metadata['segment']['restart_frequency']
  sidate = idate
  sfdate = idate
  while sidate < fdate:
-  sfdate = sidate + relativedelta(years=metadata['segment']['years_per_segment'])
+  #sfdate = sidate + relativedelta(years=metadata['segment']['years_per_segment'])
+  if restart_frequency == 'daily':
+   sfdate = sidate + relativedelta(days=1)
+  if restart_frequency == 'monthly':
+   sfdate = sidate + relativedelta(months=1)
+  if restart_frequency == 'yearly':
+   sfdate = sidate + relativedelta(years=1)
   if sfdate > fdate: sfdate = fdate
   #Set the parameters
   info['idate'] = sidate
@@ -83,9 +90,9 @@ def run(comm,metadata_file):
 
  #Iterate per catchment
  for cid in cids[rank::size]:
-  print('cid:',cid,flush=True)
+  #print('cid:',cid,flush=True)
   #Create output directory
-  os.system('mkdir -p %s/output_data/%d' % (edir,cid)) #Change for assimilated meteorology output directory
+  os.system('mkdir -p %s/output_data/%d' % (edir,cid))
   #os.chdir('%s' % (edir,))
   #mdfile = '%s/%s/metadata.json' % (edir,cid)
   Run_HydroBlocks(metadata,edir,cid,rdir)

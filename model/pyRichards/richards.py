@@ -6,24 +6,26 @@ import numba
 class richards:
 
  def __init__(self,nhru,nhru2,nsoil): #laura
+
   self.theta = np.zeros((nhru2,nsoil))
   self.thetar = np.zeros(nhru2)
   self.thetas = np.zeros(nhru2)
   self.b = np.zeros(nhru2)
   self.satpsi = np.zeros(nhru2)
   self.ksat = np.zeros(nhru2)
-  self.dem=np.zeros(nhru)
-  self.demhband = np.zeros(nhru2)
-  self.dem1hband=np.zeros(nhru2)
+  self.dem = np.zeros(nhru)
+  self.demhband = np.zeros(nhru2) #laura added
+  self.dem1hband=np.zeros(nhru2) #laura added
   self.slope = np.zeros(nhru2)
   #self.hand = np.zeros(nhru)
   self.area = np.zeros(nhru2)
   self.dz = np.zeros((nhru2,nsoil))
   self.hdiv = np.zeros((nhru2,nsoil))
   self.m = np.zeros(nhru2)
+
   #Initialize the width array
-  self.width = {}#[]# laura
-  self.I = {}#[]# laura
+  self.width = {}#[] #laura
+  self.I = {}#[]#laura
 
   return
 
@@ -79,7 +81,7 @@ class richards:
 
  def calculate_hydraulic_head(self,psi,depth):
   
-  h = self.demhband - depth - psi
+  h = self.dem - depth - psi
 
   return h
 
@@ -95,7 +97,6 @@ class richards:
   That = np.true_divide((2*T[:,np.newaxis]*T[np.newaxis,:]),(T[:,np.newaxis] + T[np.newaxis,:]))
   That[~np.isfinite(That)] = np.nan
   #[mm/s] = [mm/m]*[m/s]*[m]/[m]*[m]*[m]/[m2]
- 
   calc_div = -1000.0*That*np.true_divide(dh,dx)*np.true_divide(w,area) # mm/s
   calc_div[~np.isfinite(calc_div)] = np.nan
   #print('calc_div',time.time() - tic)
@@ -111,7 +112,7 @@ class richards:
   h1 = (I != 0).multiply(sparse.csr_matrix(h))
   dh = h1.T - h1
   #Calculate dx
-  d1 = (I != 0).multiply(sparse.csr_matrix(self.demhband))
+  d1 = (I != 0).multiply(sparse.csr_matrix(self.dem))
   dx = d1.T - d1#**2 + self.dx**2)
   dx = dx.power(2)
   dx.data += self.dx**2
@@ -173,8 +174,8 @@ class richards:
   dx = self.dx
   area = self.area
   ncsbasins=self.ncsbasins #laura, number of characteristic subbasins
-  #self.hdiv=update_workhorse(theta,dz,hdiv,thetar,thetas,b,satpsi,m,ksat,hand,w,dx,area)
-  #compute divergence independently per characteristic subbasin, laura
+  #self.hdiv[:] = update_workhorse(theta,dz,hdiv,thetar,thetas,b,satpsi,m,ksat,hand,w,dx,area)
+  #Compute divergence independently per characteristic subbasin, laura
   aux=0
   div=np.empty(self.hdiv.shape)
   for bas in range(1,ncsbasins+1):
@@ -185,6 +186,7 @@ class richards:
    div[init:fin,:]=update_workhorse(theta[init:fin,:],dz[init:fin,:],hdiv[init:fin,:],thetar[init:fin],thetas[init:fin],b[init:fin],satpsi[init:fin],m[init:fin],ksat[init:fin],hand[init:fin],w_bas,dx_bas,area[init:fin])
    aux=fin
   self.hdiv=div
+
   return
  
 @numba.jit(nopython=True,cache=True)
