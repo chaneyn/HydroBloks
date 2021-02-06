@@ -100,7 +100,10 @@ def Prepare_Model_Input_Data(hydroblocks_info):
   'irrig_land':'%s/irrig_land_latlon.tif' % workspace,
   'dbedrock':'%s/dbedrock_latlon.tif' % workspace,
   'lstmean':'%s/lstmean_latlon.tif' % workspace,
-  'lststd':'%s/lststd_latlon.tif' % workspace
+  'lststd':'%s/lststd_latlon.tif' % workspace,
+  'ndvi':'%s/ndvi_latlon.tif' % workspace, #MODIIS derived long-term NDVI, laura
+  'prismprec':'%s/prismprec_latlon.tif' % workspace, #PRISM climatology, laura
+  'prismtemp':'%s/prismtemp_latlon.tif' % workspace #PRISM climatology, laura
   }
  #if hydroblocks_info['water_management']['hwu_agric_flag']:
  #  wbd['files']['irrig_land'] = '%s/irrig_land_latlon.tif' % workspace
@@ -361,9 +364,9 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
 
  #Compute the basins
  print("Defining basins",flush=True)
- basins = terrain_tools.ttf.delineate_basins(channels,m2,fdir)
- basins_wob = terrain_tools.ttf.delineate_basins(channels_wob,mask,fdir)
- 
+ basins = terrain_tools.ttf.delineate_basins(channels_wob,m2,fdir) #laura
+ basins_wob = terrain_tools.ttf.delineate_basins(channels_wob,mask,fdir) #laura
+
  #Compute channel properties
  db_channels = terrain_tools.calculate_channel_properties(channels_wob,channel_topology,slope,eares,mask,area_all,area_all_cp,basins_wob,shreve_order,hydroblocks_info['parameter_scaling'])
 
@@ -401,7 +404,6 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
 
  #Calculate the subbasin properties
  print("Assembling the subbasin properties",flush=True)
- #print(eares,np.unique(basins))
  vars1 = hydroblocks_info['hmc_parameters']['subbasin_clustering_covariates']
  vars = []
  for var in vars1:
@@ -429,7 +431,6 @@ def Compute_HRUs_Semidistributed_HMC(covariates,mask,hydroblocks_info,wbd,eares,
               'd':tmp}
  
  (basin_clusters,) = terrain_tools.cluster_basins_updated(basins,cvs,hp_in,ncatchments)
-
  #Calculate average bankfull depth per basin cluster
  ubcs = np.unique(basin_clusters)
  ubcs = ubcs[ubcs != -9999]
@@ -674,7 +675,8 @@ def Assign_Parameters_Semidistributed(covariates,metadata,hydroblocks_info,OUTPU
  vars = ['area','area_pct','BB','DRYSMC','F11','MAXSMC','REFSMC','SATPSI',
          'SATDK','SATDW','WLTSMC','QTZ','slope','ti','dem','carea','channel',
          'land_cover','soil_texture_class','clay','sand','silt',
-         'm','hand','x_aspect','y_aspect','hru','hband']
+         'm','hand','x_aspect','y_aspect','hru','hband','ndvi','prismprec',
+         'prismtemp'] #laura
 
  #if hydroblocks_info['water_management']['hwu_agric_flag']:
  # for var in ['centroid_lats', 'centroid_lons', 'irrig_land', 'start_growing_season', 'end_growing_season']:
@@ -704,7 +706,7 @@ def Assign_Parameters_Semidistributed(covariates,metadata,hydroblocks_info,OUTPU
   OUTPUT['hru']['area_pct'][hru] = 100*OUTPUT['hru']['area'][hru]/(np.sum(area_adj[area_adj != -9999]))
   #Soil properties
   #for var in ['BB','DRYSMC','F11','MAXSMC','REFSMC','SATPSI','SATDK','SATDW','WLTSMC','QTZ','clay','sand','silt']:
-  for var in ['BB','DRYSMC','F11','MAXSMC','SATPSI','SATDK','SATDW','QTZ','clay','sand','silt']:
+  for var in ['BB','DRYSMC','F11','MAXSMC','SATPSI','SATDK','SATDW','QTZ','clay','sand','silt']: #laura
    #print(var,np.unique(covariates[var][idx]))
    if var in ['SATDK','SATDW']:
     try:
@@ -1170,6 +1172,11 @@ def Prepare_Meteorology_Semidistributed(workspace,wbd,OUTPUT,input_dir,info,hydr
   #Write the meteorology to the netcdf file (single chunk for now...)
   grp = hydroblocks_info['input_fp'].groups['meteorology']
   grp.createVariable(var,'f4',('time','hru'))#,zlib=True)
+  t=meteorology[var].shape[1] #laura.Write as weekly chunks to save memory.SLOW
+  nweeks=t//(168)
+  for week in range(0,nweeks):
+   grp.variables[var][:,int(week*168):int((week*168)+168)]=meteorology[var][:,int(week*168):int((week*168)+168)]
+  grp.variables[var][:,int(nweeks*168):]=meteorology[var][:,int(nweeks*168):]
   grp.variables[var][:] = meteorology[var][:]
 
  #Add time information

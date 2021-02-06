@@ -41,18 +41,18 @@ def Run_HydroBlocks(metadata,edir,cid,rdir):
  fdate = datetime.datetime(metadata['enddate']['year'],metadata['enddate']['month'],metadata['enddate']['day'],0) + datetime.timedelta(days=1)
  
  #Run the segments for the model
- restart_frequency = metadata['segment']['restart_frequency']
+ #restart_frequency = metadata['segment']['restart_frequency']
  sidate = idate
  sfdate = idate
  while sidate < fdate:
-  #sfdate = sidate + relativedelta(years=metadata['segment']['years_per_segment'])
-  if restart_frequency == 'daily':
-   sfdate = sidate + relativedelta(days=1)
-  if restart_frequency == 'monthly':
-   sfdate = sidate + relativedelta(months=1)
-  if restart_frequency == 'yearly':
-   sfdate = sidate + relativedelta(years=1)
-  if sfdate > fdate: sfdate = fdate
+  sfdate = sidate + relativedelta(years=metadata['segment']['years_per_segment'])
+  #if restart_frequency == 'daily':
+   #sfdate = sidate + relativedelta(days=1)
+  #if restart_frequency == 'monthly':
+   #sfdate = sidate + relativedelta(months=1)
+  #if restart_frequency == 'yearly':
+   #sfdate = sidate + relativedelta(years=1)
+  #if sfdate > fdate: sfdate = fdate
   #Set the parameters
   info['idate'] = sidate
   info['fdate'] = sfdate 

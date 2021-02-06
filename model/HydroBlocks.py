@@ -909,7 +909,7 @@ class HydroBlocks:
   # Update subsurface
   self.update_subsurface()
   end=time.perf_counter()
-  #print('TIME: ',end-init)
+  print('TIME: ',end-init)
   
   # Update NOAH
   n = self.noahmp
